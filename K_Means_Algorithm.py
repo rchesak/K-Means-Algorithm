@@ -137,7 +137,7 @@ def K_Means_Model_Classifier2(centroids, dataSet, max_iter=300, distMeas=cosine_
     cluster[:,1] = np.amax(similarity, axis=0) #'np.amax' returns the maximum value of an array or maximum along an axis.
     #'cluster[:,1]' => for each row in the second column, value = max sim value for that document
     
-    #invert similarity to make it doc-cluster:
+    #transpose similarity to make it doc-cluster:
     similarity_T = similarity.T
     
     #create a slice of cluster that just contains the assignments:
