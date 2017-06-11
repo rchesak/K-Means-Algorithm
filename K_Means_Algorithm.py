@@ -15,6 +15,12 @@ assignments.
 These functions will allow you to cluster your documents, then use the model centroids in a classifer algorithm to classify 
 unknown documents.'''
 
+###############################################
+# Euclidean Distance Algorithm:
+############################################### 
+def distEclud(vecA, vecB):
+    return sqrt(sum(power(vecA - vecB, 2))) #la.norm(vecA-vecB)
+
 
 ###############################################
 # Cosine Similarity Algorithm:
