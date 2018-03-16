@@ -113,12 +113,14 @@ def K_Means(dataSet, k, max_iter=300, distMeas=cosine_sim, createCent=randCent):
     return Centroids, cluster
 
 ###############################################
-# Vectorized Classifier (based upon the K_Means Model):
+# Vectorized Classifier (based upon the K_Means Clusters):
 ###############################################   
 
-def K_Nearest_Neighbor_Classifier(centroids, dataSet, max_iter=300, distMeas=cosine_sim):
+def Nearest_Neighbor_Classifier(centroids, dataSet, max_iter=300, distMeas=cosine_sim):
     # Where centroids are those found from running K_Means(), dataSet is a Numpy array, max_iter is the maximum number of loops (to 
     # avoid large or infinite iterations), and distMeas is the desired similarity measure (cosine similarity or Euclidean distance).
+    # Note: This function finds which cluster centroid each document is nearest to, and assign that document to that cluster. It is
+    # essentially a K Nearest Neighbor algorithm with k=1.
     
     docs = dataSet.shape[0]
     k = centroids.shape[0]
