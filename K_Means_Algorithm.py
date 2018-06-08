@@ -18,7 +18,7 @@ import numpy as np
 ###############################################
 # Euclidean Distance Algorithm:
 ############################################### 
-def distEclud(vecA, vecB):
+def distEucld(vecA, vecB):
     return sqrt(sum(power(vecA - vecB, 2))) #la.norm(vecA-vecB)
 
 
