@@ -86,7 +86,7 @@ def K_Means(dataSet, k, max_iter=300, distMeas=cosine_sim, createCent=randCent):
         similarity = np.zeros((k,docs)) #this will eventually show you how similar each doc is to each cluster's centroid
         for j in range(k): #iterate once for each cluster (row)
             # Run cosine similarity as a numpy function along axis 1 (updates each doc's similarity value, one cluster at a time):
-            similarity[j,:] = np.apply_along_axis(func1d=distMeas, axis=1, dataSet, Centroids[j,:])
+            similarity[j,:] = np.apply_along_axis(distMeas, 1, dataSet, Centroids[j,:])
             # Documentation: 
             # Execute func1d(a, *args) where func1d operates on 1-D arrays and 'a' is a 1-D slice of 'arr' along axis.       
             # Apply a function to 1-D slices along the given axis.
