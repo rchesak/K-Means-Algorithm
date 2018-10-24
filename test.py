@@ -11,6 +11,9 @@ def update_mini_batch(self, mini_batch, eta, lmbda, n):
                        for b, nb in zip(self.biases, nabla_b)]
 
     def backprop(self, x, y):
+        """Return a tuple ``(nabla_b, nabla_w)`` representing the
+        gradient for the cost function C_x.
+        """
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         # feedforward
