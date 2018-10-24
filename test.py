@@ -73,8 +73,7 @@ def update_mini_batch(self, mini_batch, eta, lmbda, n):
         # feedforward
         activation = x 
         activations = [x] 
-        zs = [] 
-        
+        zs = []       
         if self.masks: 
             for b, w, m in zip(self.biases[:-1], self.weights[:-1], self.masks):
                 z = np.dot(w, activation)+b
@@ -82,14 +81,12 @@ def update_mini_batch(self, mini_batch, eta, lmbda, n):
                 activation = (self.act_hidden).fn(z) 
                 dropout_activation = activation * m.reshape((len(m),1)) 
                 activations.append(dropout_activation)
-
         else:
             for b, w in zip(self.biases[:-1], self.weights[:-1]):
                 z = np.dot(w, activation)+b
                 zs.append(z)
                 activation = (self.act_hidden).fn(z)
-                activations.append(activation)
-                
+                activations.append(activation)         
         b = self.biases[-1] 
         w = self.weights[-1]
         z = np.dot(w, activation)+b
@@ -105,8 +102,7 @@ def update_mini_batch(self, mini_batch, eta, lmbda, n):
         else:
             delta = c_prime * a_prime 
         nabla_b[-1] = delta
-        nabla_w[-1] = np.dot(delta, activations[-2].transpose())
-        
+        nabla_w[-1] = np.dot(delta, activations[-2].transpose())        
         for l in range(2, self.num_layers):
             z = zs[-l]
             sp = (self.act_hidden).derivative(z)
