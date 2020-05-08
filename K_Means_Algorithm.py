@@ -5,151 +5,244 @@ Created on Thu May 18 16:47:02 2017
 @author: Renel Chesak
 """
 
-'''This is a set of vectorized algorithms that use a document-term numpy array to create K-Means cluster centroids and cluster 
-assignments.
-These functions will allow you to cluster your documents, then use the model centroids in a classifer algorithm to classify 
-unknown documents.'''
-
-###############################################
 # Import required libraries:
-############################################### 
 import numpy as np
 
-###############################################
-# Euclidean Distance Algorithm:
-############################################### 
-def distEucld(vecA, vecB):
-    return sqrt(sum(power(vecA - vecB, 2))) #la.norm(vecA-vecB)
+class Train():
+    '''
+    This is a set of vectorized algorithms that use a document-term numpy array to create K-Means cluster centroids and cluster 
+    assignments.
+    These functions will allow you to cluster your documents, then use the model centroids in a classifer algorithm to classify 
+    unknown documents.
+    '''
 
-
-###############################################
-# Cosine Similarity Algorithm:
-############################################### 
-
-#cosine similarity between 2 vectors:
-def cosine_sim(vecA, vecB):
-    #create normalized copies of each vector:
-    vecA_norm = np.linalg.norm(vecA)
-    vecB_norm = np.linalg.norm(vecB)
-    #compute cosine similarity:
-    sim = np.dot(vecA, vecB)/(vecA_norm * vecB_norm) #this should return a scalar float
-    return sim
-
-###############################################
-# Vectorized Random Centroid Algorithm:
-############################################### 
-
-#create K random centers in your dataset to be used in your clustering algorithm:
-def randCent(dataSet, k):
-    # Where dataSet is a Numpy array, and k is the desired number of clusters.
-    n = np.shape(dataSet)[1] #n will be the number of terms
-    centroids = np.zeros((k,n), dtype=float) #creates a matrix of zeros with the shape:K rows by n columns
-    for j in range(n): #iterate once for each term
-        minJ = min(dataSet[:,j]) #minimum value in that term's column
-        rangeJ = float(max(dataSet[:,j]) - minJ) #range of values in that term's column
-        centroids[:,j] = minJ + rangeJ * np.random.rand(k) #set each row in that term's column to a different random number
-        # that has been multiplied by the sum of min and range as a way of normalizing the random centers
-    centroids = np.array(centroids) # ensure the matrix is a 2D Numpy array, as these are extremely fast for matrix manipulation
-    return centroids 
-
-###############################################
-# Vectorized K Means Algorithm:
-############################################### 
-
-def K_Means(dataSet, k, max_iter=300, distMeas=cosine_sim, createCent=randCent):
-    # Where dataSet is a Numpy array, k is the desired number of clusters, max_iter is the maximum number of loops (to avoid large or
-    # infinite iterations), distMeas is the desired similarity measure (cosine similarity or Euclidean distance), and createCent is
-    # the function which creates the initial randomized cluster centers.
-    
-    # Store the number of documents
-    docs = np.shape(dataSet)[0]
-    
-    # Create an array of zeros to store 1) the cluster assignment and 2) the distance measure
-    cluster = np.zeros((docs,2))
-    
-    # Call the randCent function to create a randomized set of k centroids
-    Centroids = createCent(dataSet, k)
-    
-    # Initial values to start the while loop
-    clusterChanged = True
-    cur_iter = 0
-    
-    # While the cluster assignments are still changing and we have not reached the max iteration:
-    while clusterChanged and cur_iter < max_iter:
-        # Update the clusterChanged value so we don't run into an infinite loop.
-        clusterChanged = False # note that there is code further down to change this to true if the clusters did change
+    def distEucld(vecA, vecB):
+        '''
+        Parameters
+            vecA : 1D Numpy array
+            vecb : 1D Numpy array
         
-        #assign the previous cluster to an object:
-        previous_cluster = np.array(cluster, copy=True) #intially, this will be the random cluster starting points
+        Returns 
+            sim : float
+                The euclidean distance between two vectors.        
+        '''
+        return sqrt(sum(power(vecA - vecB, 2))) 
+
+    def cosineSim(vecA, vecB):
+        '''
+        Parameters
+            vecA : 1D Numpy array
+            vecb : 1D Numpy array        
+        
+        Returns 
+            sim : float
+                The cosine similarity between two vectors.
+        '''
+        #create normalized copies of each vector:
+        vecA_norm = np.linalg.norm(vecA)
+        vecB_norm = np.linalg.norm(vecB)
+        #compute cosine similarity:
+        sim = np.dot(vecA, vecB)/(vecA_norm * vecB_norm) #this should return a scalar float
+        return sim
+
+    def randCent(dataSet, k):
+        '''
+        Vectorized Random Centroid Algorithm. Selects `k` random centers in your dataset to be used in a clustering algorithm.
+        
+        Parameters
+            dataSet : 2-D Numpy array
+                The doc-term dataset you wish to cluster.
+            k : int
+                Desired number of random centers to select with the dataSet
+        
+        Returns
+            centroids : 2-D Numpy array
+                The centroid-term matrix.
+        '''
+        n = np.shape(dataSet)[1] #n will be the number of terms
+        centroids = np.zeros((k,n), dtype=float) #creates a matrix of zeros with the shape:K rows by n columns
+        for j in range(n): #iterate once for each term
+            minJ = min(dataSet[:,j]) #minimum value in that term's column
+            rangeJ = float(max(dataSet[:,j]) - minJ) #range of values in that term's column
+            centroids[:,j] = minJ + rangeJ * np.random.rand(k) #set each row in that term's column to a different random number
+            # that has been multiplied by the sum of min and range as a way of normalizing the random centers
+        centroids = np.array(centroids) 
+        return centroids 
+
+    def KMeans(dataSet, k, max_iter=300, distMeas=cosineSim, createCent=randCent):
+        '''
+        K Means Algorithm. Works with 2D Numpy arrays, as these are extremely fast for matrix manipulation.
+
+        Parameters
+            dataSet : 2-D Numpy array
+                The doc-term dataset you wish to cluster.
+            k : int
+                Desired number of random centers to select with the dataSet
+            max_iter : int, default 300   
+                The maximum number of loops (to avoid large or infinite iterations)
+            distMeas : function, default cosine_sim
+                Distance measure
+            createCent : function, default randCent
+                Random centroid generator
+       
+        Returns
+            Centroids : 2-D Numpy array
+                The centroid-term matrix.
+            cluster : 2-D Numpy array
+                Matrix of all document's cluster assignment (column 1) and distance from its cluster's centroid (column 2)
+        '''
+        # Store the number of documents
+        n_docs = np.shape(dataSet)[0]
+        
+        # Initialize an array of zeros to store 1) the cluster assignment and 2) the distance measure
+        cluster = np.zeros((n_docs,2))
+        
+        # Call the randCent function to create a randomized set of k centroids
+        Centroids = createCent(dataSet, k)
+        
+        # Initial values to start the while loop
+        clusterChanged = True
+        cur_iter = 0
+        
+        # While the cluster assignments are still changing and we have not reached the max iteration:
+        while clusterChanged and cur_iter < max_iter:
+            # Update the clusterChanged value so we don't run into an infinite loop.
+            clusterChanged = False # note that there is code further down to change this to true if the clusters did change
+            
+            #assign the previous cluster to an object:
+            previous_cluster = np.array(cluster, copy=True) #intially, this will be the random cluster starting points
+            
+            # Create an intital matrix of zeros to store similarity values:
+            similarity = np.zeros((k, n_docs)) #this will eventually show you how similar each doc is to each cluster's centroid
+            for j in range(k): #iterate once for each cluster (row)
+                # Run cosine similarity as a numpy function along axis 1 (updates each doc's similarity value, one cluster at a time):
+                similarity[j,:] = np.apply_along_axis(distMeas, 1, dataSet, Centroids[j,:])
+        
+            # Capture both the cluster assigment and the similarity value. Note: max values => most similar. 
+            cluster[:,0] = np.argmax(similarity, axis=0)         
+            cluster[:,1] = np.amax(similarity, axis=0) 
+            
+            # If the clusters have not changed, break out of while loop
+            if np.array_equal(cluster, previous_cluster):
+                break 
+            else:
+                clusterChanged = True #sets this back to true if the cluster assinments are still changing
+                # We only bother to recalculate centroid if there was a cluster reassignment
+                for centroid in range(k): #iterate once for each cluster
+                    # Find the indicies of the documents that make up each cluster
+                    correct_cluster = np.where(cluster[:,0] == centroid)[0] 
+                    # Use the indicies to grab and store those documents separately
+                    docs_in_cluster = np.take(dataSet, correct_cluster, axis=0) 
+                    # If more than one document, take the mean as the new centroid (otherwise centroid is that one document)
+                    if len(docs_in_cluster) > 0: # TEST THIS CODE to see if the if statement can be removed
+                        Centroids[centroid,:] = np.mean(docs_in_cluster, axis=0)
+            cur_iter += 1
+        return Centroids, cluster
+
+    def printClusterSummary(centroids, cluster, n_terms, dt_arr, terms_arr):
+        '''
+        Prints summary of clustering results.
+
+        Parameters
+            centroids : 2-D Numpy array
+                The centroid-term matrix.
+            cluster : 2-D Numpy array
+                Matrix of all document's cluster assignment (column 1) and distance from its cluster's centroid (column 2)        
+            n_terms : int
+                The number of most frequent terms to print.
+            dt_arr : 2-D Numpy array
+                The doc-term dataset that you clustered.
+            terms_arr : 2-D Numpy array
+                An array containing the terms represented in `dt_arr`.                    
+        '''
+        k = centroids.shape[0]
+        
+        # take the cluster assignments from the kmeans output:
+        cluster_assignments = cluster[:, 0]
+        #create a list of arrays containing the indicies of the documents that are in each cluster
+        cluster_x_doc_idx = [np.where(cluster_assignments == i)[0] for i in range(k)]
+
+        for i in range(k):
+            print('###############################################')
+            print("Cluster: {}".format(i))
+                    
+            print('\t-----------------------')
+            print('\tNumber of docs in cluster: {}'.format(len(cluster_x_doc_idx[i])))
+            print('\t-----------------------')
+            
+            cluster_centroid = centroids[i, :]
+            top_n_term_idx = np.argpartition(cluster_centroid, -n_terms)[-n_terms:]       
+            top_n_term_idx_sorted = top_n_term_idx[np.argsort(-cluster_centroid[top_n_term_idx])]
+            top_n_terms_sorted = terms_arr[top_n_term_idx_sorted]
+                
+            #make the terms indicies a numpy array:
+            top_n_term_idx_sorted_arr = np.array(top_n_term_idx_sorted, dtype='int32')        
+            #grab the docs (rows) in cluster x:
+            cluster_x_DT = dt_arr[cluster_x_doc_idx[i], :]
+            #grab the top N terms (columns) in cluster x:
+            top_cluster_x_DT = cluster_x_DT[:, top_n_term_idx_sorted_arr] 
+            #get the raw DF for each term:
+            DF_cluster_x = np.array([(top_cluster_x_DT!=0).sum(0)]) #counts nonzero entries for each term
+            #convert that to the % of docs that contain that term (docs containing the term / docs in the cluster):
+            DF_percent_cluster_x = (DF_cluster_x)/len(cluster_x_doc_idx[i])               
+            
+            print('\t-----------------------')
+            print('\tTop N terms | % of docs in cluster that contain those terms')
+            print('\t-----------------------')
+            for i in range(n_terms):
+                print('\t{:>11} | {:.1f}%'.format(top_n_terms_sorted[i], 100*(DF_percent_cluster_x[0][i])))
+                
+            print('###############################################\n')
+
+    def NearestNeighborClassifier(centroids, dataSet, max_iter=300, distMeas=cosineSim):
+        '''
+        Classifier. Works with 2D Numpy arrays, as these are extremely fast for matrix manipulation.
+        This function finds which cluster centroid each document is nearest to, and assigns that document to that cluster. It is
+        essentially a K Nearest Neighbor algorithm with k=1.   
+
+        Parameters
+            centroids : 2-D Numpy array
+                The centroid-term matrix, generated from running `K_Means()`.        
+            dataSet : 2-D Numpy array
+                The doc-term dataset you wish to cluster.
+            max_iter : int, default 300   
+                The maximum number of loops (to avoid large or infinite iterations)
+            distMeas : function, default cosine_sim
+                Distance measure
+        
+        Returns
+            all_results : 2-D Numpy array
+                Matrix of all document's predicted cluster assignment (column 1), and the similarities to each cluster (columns 2:k+1, 
+                where k is the number of clusters).            
+            cluster_assignments : 2-D Numpy array
+                Predicted cluster assignments.
+        '''                
+        n_docs = dataSet.shape[0]
+        k = centroids.shape[0]
+        
+        # Create an array of zeros to store 1) the cluster assignment and 2) the distance value
+        cluster = np.zeros((n_docs,2))
         
         # Create an intital matrix of zeros to store similarity values:
-        similarity = np.zeros((k,docs)) #this will eventually show you how similar each doc is to each cluster's centroid
-        for j in range(k): #iterate once for each cluster (row)
-            # Run cosine similarity as a numpy function along axis 1 (updates each doc's similarity value, one cluster at a time):
-            similarity[j,:] = np.apply_along_axis(distMeas, 1, dataSet, Centroids[j,:])
-            # Documentation: 
-            # Execute func1d(a, *args) where func1d operates on 1-D arrays and 'a' is a 1-D slice of 'arr' along axis.       
-            # Apply a function to 1-D slices along the given axis.
-       
-        # Capture both the cluster assigment and the similarity value. Note: max values => most similar. 
-        cluster[:,0] = np.argmax(similarity, axis=0)         
-        cluster[:,1] = np.amax(similarity, axis=0) 
+        similarity = np.zeros((k, n_docs))
         
-        # If the clusters have not changed, break out of while loop
-        if np.array_equal(cluster, previous_cluster):
-            break 
-        else:
-            clusterChanged = True #sets this back to true if the cluster assinments are still changing
-            # We only bother to recalculate centroid if there was a cluster reassignment
-            for centroid in range(k): #iterate once for each cluster
-                # Find the indicies of the documents that make up each cluster
-                correct_cluster = np.where(cluster[:,0] == centroid)[0] 
-                # Use the indicies to grab and store those documents separately
-                docs_in_cluster = np.take(dataSet, correct_cluster, axis=0) 
-                # If more than one document, take the mean as the new centroid (otherwise centroid is that one document)
-                if len(docs_in_cluster) > 0: # TEST THIS CODE to see if the if statement can be removed
-                    Centroids[centroid,:] = np.mean(docs_in_cluster, axis=0)
-        cur_iter += 1
-    return Centroids, cluster
+        for j in range(k): #iterate once for each cluster
+            # Run your similarity function along axis 1 (updates each doc's similarity value, one cluster at a time):
+            similarity[j,:] = np.apply_along_axis(distMeas, 1, dataSet, centroids[j,:])
+        
+        # Capture both the cluster assigment and the similarity value. Note: max values => most similar. 
+        cluster[:,0] = np.argmax(similarity, axis=0)
+        cluster[:,1] = np.amax(similarity, axis=0)
+        
+        # Transpose similarity to make it a document-by-cluster matrix:
+        similarity_T = similarity.T
+        
+        # Create a slice of cluster that just contains the assignments:
+        cluster_assignments = cluster[:, 0]
+        
+        # Make the cluster_assignments a 2D Numpy array:
+        cluster_assignments_reshaped = cluster_assignments.reshape(-1, 1)
 
-###############################################
-# Vectorized Classifier (based upon the K_Means Clusters):
-###############################################   
-
-def Nearest_Neighbor_Classifier(centroids, dataSet, max_iter=300, distMeas=cosine_sim):
-    # Where centroids are those found from running K_Means(), dataSet is a Numpy array, max_iter is the maximum number of loops (to 
-    # avoid large or infinite iterations), and distMeas is the desired similarity measure (cosine similarity or Euclidean distance).
-    # Note: This function finds which cluster centroid each document is nearest to, and assign that document to that cluster. It is
-    # essentially a K Nearest Neighbor algorithm with k=1.
-    
-    docs = dataSet.shape[0]
-    k = centroids.shape[0]
-    
-    # Create an array of zeros to store 1) the cluster assignment and 2) the distance value
-    cluster = np.zeros((docs,2))
-    
-    # Create an intital matrix of zeros to store similarity values:
-    similarity = np.zeros((k,docs))
-    
-    for j in range(k): #iterate once for each cluster
-        # Run your similarity function along axis 1 (updates each doc's similarity value, one cluster at a time):
-        similarity[j,:] = np.apply_along_axis(func1d=distMeas, axis=1, dataSet, centroids[j,:])
-    
-    # Capture both the cluster assigment and the similarity value. Note: max values => most similar. 
-    cluster[:,0] = np.argmax(similarity, axis=0)
-    cluster[:,1] = np.amax(similarity, axis=0)
-    
-    # Transpose similarity to make it a document-by-cluster matrix:
-    similarity_T = similarity.T
-    
-    # Create a slice of cluster that just contains the assignments:
-    cluster_assignments = cluster[:, 0]
-    
-    # Make the cluster_assignments a 2D Numpy array:
-    cluster_assignments_reshaped = cluster_assignments.reshape(-1, 1)
-
-    # Create an array where the rows are the docs, the first column is the cluster assignment, and the next K columns are the 
-    # similarities to each cluster:
-    all_results = np.concatenate((cluster_assignments_reshaped, similarity_T), axis=1)
-    
-    return all_results, cluster_assignments
+        all_results = np.concatenate((cluster_assignments_reshaped, similarity_T), axis=1)
+        
+        return all_results, cluster_assignments
