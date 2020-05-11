@@ -10,10 +10,8 @@ import numpy as np
 
 class Train():
     '''
-    This is a set of vectorized algorithms that use a document-term numpy array to create K-Means cluster centroids and cluster 
-    assignments.
-    These functions will allow you to cluster your documents, then use the model centroids in a classifer algorithm to classify 
-    unknown documents.
+    With this class, you can cluster items with Train.KMeansClustering() and then pass the generated cluster centroids to 
+    Train.NearestNeighborClassifier() to classify unseen data. The latter is essentially a K Nearest Neighbor algorithm with k=1.
     '''
 
     def distEucld(vecA, vecB):
@@ -51,7 +49,7 @@ class Train():
         
         Parameters
             dataSet : 2-D Numpy array
-                The doc-term dataset you wish to cluster.
+                The dataset you wish to cluster.
             k : int
                 Desired number of random centers to select with the dataSet
         
@@ -59,12 +57,12 @@ class Train():
             centroids : 2-D Numpy array
                 The centroid-term matrix.
         '''
-        n = np.shape(dataSet)[1] #n will be the number of terms
+        n = np.shape(dataSet)[1] #n will be the number of dimensions
         centroids = np.zeros((k,n), dtype=float) #creates a matrix of zeros with the shape:K rows by n columns
-        for j in range(n): #iterate once for each term
-            minJ = min(dataSet[:,j]) #minimum value in that term's column
-            rangeJ = float(max(dataSet[:,j]) - minJ) #range of values in that term's column
-            centroids[:,j] = minJ + rangeJ * np.random.rand(k) #set each row in that term's column to a different random number
+        for j in range(n): #iterate once for each dimension
+            minJ = min(dataSet[:,j]) #minimum value in that dimension's column
+            rangeJ = float(max(dataSet[:,j]) - minJ) #range of values in that dimension's column
+            centroids[:,j] = minJ + rangeJ * np.random.rand(k) #set each row in that dimension's column to a different random number
             # that has been multiplied by the sum of min and range as a way of normalizing the random centers
         centroids = np.array(centroids) 
         return centroids 
