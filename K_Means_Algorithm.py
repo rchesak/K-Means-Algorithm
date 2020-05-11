@@ -55,7 +55,7 @@ class Train():
         
         Returns
             centroids : 2-D Numpy array
-                The centroid-term matrix.
+                The centroid-dimension matrix.
         '''
         n = np.shape(dataSet)[1] #n will be the number of dimensions
         centroids = np.zeros((k,n), dtype=float) #creates a matrix of zeros with the shape:K rows by n columns
@@ -137,7 +137,7 @@ class Train():
             cur_iter += 1
         return Centroids, cluster
 
-    def printClusterSummary(centroids, cluster, n_terms, dt_arr, terms_arr):
+    def printDocClusterSummary(centroids, cluster, n_terms, dt_arr, terms_arr):
         '''
         Prints summary of document clustering results.
 
@@ -168,6 +168,7 @@ class Train():
             print('\tNumber of docs in cluster: {}'.format(len(cluster_x_doc_idx[i])))
             print('\t-----------------------')
             
+            #sort to prepare top n terms
             cluster_centroid = centroids[i, :]
             top_n_term_idx = np.argpartition(cluster_centroid, -n_terms)[-n_terms:]       
             top_n_term_idx_sorted = top_n_term_idx[np.argsort(-cluster_centroid[top_n_term_idx])]
