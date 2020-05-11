@@ -137,7 +137,7 @@ class Train():
             cur_iter += 1
         return Centroids, cluster
 
-    def printDocClusterSummary(centroids, cluster, n_terms, dt_arr, terms_arr):
+    def printDocClusterSummary(centroids, cluster, top_n_terms, dt_arr, terms_arr):
         '''
         Prints summary of document clustering results.
 
@@ -146,7 +146,7 @@ class Train():
                 The centroid-term matrix.
             cluster : 2-D Numpy array
                 Matrix of all document's cluster assignment (column 1) and distance from its cluster's centroid (column 2)        
-            n_terms : int
+            top_n_terms : int
                 The number of most frequent terms to print.
             dt_arr : 2-D Numpy array
                 The doc-term dataset that you clustered.
@@ -154,44 +154,48 @@ class Train():
                 An array containing the terms represented in `dt_arr`.                    
         '''
         k = centroids.shape[0]
-        
+
         # take the cluster assignments from the KMeansClustering output:
         cluster_assignments = cluster[:, 0]
         #create a list of arrays containing the indicies of the documents that are in each cluster
-        cluster_x_doc_idx = [np.where(cluster_assignments == i)[0] for i in range(k)]
+        cluster_i_doc_idx = [np.where(cluster_assignments == i)[0] for i in range(k)]
 
         for i in range(k):
-            print('###############################################')
+            #grab indices of docs in cluster i
+            doc_idx = cluster_i_doc_idx[i]
+            #grab cluster i's centroid
+            centroid = centroids[i, :]
+
+            print('---------------------------------------------------------------')
             print("Cluster: {}".format(i))
-                    
+
             print('\t-----------------------')
-            print('\tNumber of docs in cluster: {}'.format(len(cluster_x_doc_idx[i])))
+            print('\tNumber of docs in cluster: {}'.format(len(doc_idx)))
             print('\t-----------------------')
-            
-            #sort to prepare top n terms
-            cluster_centroid = centroids[i, :]
-            top_n_term_idx = np.argpartition(cluster_centroid, -n_terms)[-n_terms:]       
-            top_n_term_idx_sorted = top_n_term_idx[np.argsort(-cluster_centroid[top_n_term_idx])]
-            top_n_terms_sorted = terms_arr[top_n_term_idx_sorted]
-                
-            #make the terms indicies a numpy array:
-            top_n_term_idx_sorted_arr = np.array(top_n_term_idx_sorted, dtype='int32')        
-            #grab the docs (rows) in cluster x:
-            cluster_x_DT = dt_arr[cluster_x_doc_idx[i], :]
-            #grab the top N terms (columns) in cluster x:
-            top_cluster_x_DT = cluster_x_DT[:, top_n_term_idx_sorted_arr] 
-            #get the raw DF for each term:
-            DF_cluster_x = np.array([(top_cluster_x_DT!=0).sum(0)]) #counts nonzero entries for each term
+
+            #prepare the top n terms (the terms in that centroid which the highest TFxIDF)
+            top_n_terms_idx = np.argpartition(centroid, -top_n_terms)[-top_n_terms:]       
+            top_n_terms_idx_sorted = top_n_terms_idx[np.argsort(-centroid[top_n_terms_idx])]
+            top_n_terms_sorted = terms_arr[top_n_terms_idx_sorted]
+
+            #make the term indicies a numpy array:
+            top_n_terms_idx_sorted_arr = np.array(top_n_terms_idx_sorted, dtype='int32')        
+            #grab the docs (rows) in cluster i:
+            cluster_i_DT = dt_arr[doc_idx, :]
+            #grab the top N terms (columns) in cluster i:
+            top_cluster_i_DT = cluster_i_DT[:, top_n_terms_idx_sorted_arr] 
+            #get the raw docFreq for each term:
+            docFreq_cluster_i = np.array([(top_cluster_i_DT!=0).sum(0)]) #counts nonzero entries for each term
             #convert that to the % of docs that contain that term (docs containing the term / docs in the cluster):
-            DF_percent_cluster_x = (DF_cluster_x)/len(cluster_x_doc_idx[i])               
-            
+            docFreq_percent_cluster_i = (docFreq_cluster_i)/len(doc_idx)               
+
             print('\t-----------------------')
             print('\tTop N terms | % of docs in cluster that contain those terms')
             print('\t-----------------------')
-            for i in range(n_terms):
-                print('\t{:>11} | {:.1f}%'.format(top_n_terms_sorted[i], 100*(DF_percent_cluster_x[0][i])))
-                
-            print('###############################################\n')
+            for i in range(top_n_terms):
+                print('\t{:>11} | {:.1f}%'.format(top_n_terms_sorted[i], 100*(docFreq_percent_cluster_i[0][i])))
+
+            print('---------------------------------------------------------------\n')
 
     def NearestNeighborClassifier(centroids, dataSet, max_iter=300, distMeas=cosineSim):
         '''
